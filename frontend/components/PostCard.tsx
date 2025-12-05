@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

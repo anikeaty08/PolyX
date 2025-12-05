@@ -1,24 +1,17 @@
-/* eslint-disable @next/next/no-page-custom-font */
+"use client";
 import { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider, darkTheme, getDefaultWallets } from "@rainbow-me/rainbowkit";
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { WagmiProvider, createConfig, http } from "wagmi";
 import { polygonAmoy } from "wagmi/chains";
-import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
-const { chains, publicClient } = configureChains(
-  [polygonAmoy],
-  [
-    jsonRpcProvider({
-      rpc: () => ({
-        http: "https://rpc-amoy.polygon.technology",
-      }),
-    }),
-  ]
-);
+const chains = [polygonAmoy];
+const transports = {
+  [polygonAmoy.id]: http("https://rpc-amoy.polygon.technology"),
+};
 
 const { connectors } = getDefaultWallets({
   appName: "PolyX",
@@ -26,23 +19,24 @@ const { connectors } = getDefaultWallets({
   chains,
 });
 
-const wagmiConfig = createConfig({
+const config = createConfig({
   autoConnect: true,
   connectors,
-  publicClient,
+  chains,
+  transports,
 });
 
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <WagmiConfig config={wagmiConfig}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider chains={chains} theme={darkTheme({ accentColor: "#6366f1" })}>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   );
 }
 

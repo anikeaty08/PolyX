@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { z } from "zod";
-import { Post } from "./types";
+import { Post, PostType } from "./types";
 
 const polyxAbi = [
   "function nextPostId() view returns (uint256)",
@@ -67,7 +67,7 @@ function mapPost(raw: any): Post {
     author: raw.author,
     content: raw.content,
     timestamp: Number(raw.timestamp) * 1000,
-    postType: raw.postType,
+    postType: Number(raw.postType) as PostType,
     referenceId: Number(raw.referenceId),
     likeCount: Number(raw.likeCount),
     retweetCount: Number(raw.retweetCount),

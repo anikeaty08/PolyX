@@ -1,3 +1,4 @@
+"use client";
 import { WalletSection } from "../components/WalletSection";
 import { Composer } from "../components/Composer";
 import { Feed } from "../components/Feed";
