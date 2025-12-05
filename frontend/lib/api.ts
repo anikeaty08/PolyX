@@ -1,15 +1,29 @@
-export type PostType = 0 | 1 | 2;
+export type PostType = 0 | 1 | 2 | 3;
 
 export interface Post {
   id: number;
   author: string;
   content: string;
+  mediaCid: string;
   timestamp: number;
   postType: PostType;
   referenceId: number;
   likeCount: number;
   retweetCount: number;
   quoteCount: number;
+  commentCount: number;
+  version: number;
+  deleted: boolean;
+}
+
+export interface Profile {
+  handle: string;
+  displayName: string;
+  bio: string;
+  avatarCid: string;
+  headerCid: string;
+  owner: string;
+  createdAt: number;
 }
 
 const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
@@ -29,10 +43,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   feed: () => request<Post[]>("/api/feed"),
   post: (id: number) => request<Post>(`/api/post/${id}`),
-  tweet: (user: string, text: string) =>
+  tweet: (user: string, text: string, mediaCid = "") =>
     request<{ txHash: string; postId?: number }>("/api/tweet", {
       method: "POST",
-      body: JSON.stringify({ user, text }),
+      body: JSON.stringify({ user, text, mediaCid }),
     }),
   like: (user: string, postId: number) =>
     request<{ txHash: string }>("/api/like", {
@@ -44,10 +58,66 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ user, postId }),
     }),
-  quote: (user: string, postId: number, text: string) =>
+  quote: (user: string, postId: number, text: string, mediaCid = "") =>
     request<{ txHash: string; postId?: number }>("/api/quote", {
       method: "POST",
-      body: JSON.stringify({ user, postId, text }),
+      body: JSON.stringify({ user, postId, text, mediaCid }),
+    }),
+  comment: (user: string, postId: number, text: string, mediaCid = "") =>
+    request<{ txHash: string; postId?: number }>("/api/comment", {
+      method: "POST",
+      body: JSON.stringify({ user, postId, text, mediaCid }),
+    }),
+  edit: (user: string, postId: number, text: string, mediaCid = "") =>
+    request<{ txHash: string }>("/api/edit", {
+      method: "POST",
+      body: JSON.stringify({ user, postId, text, mediaCid }),
+    }),
+  del: (user: string, postId: number) =>
+    request<{ txHash: string }>("/api/delete", {
+      method: "POST",
+      body: JSON.stringify({ user, postId }),
+    }),
+  profileCreate: (data: {
+    user: string;
+    handle: string;
+    displayName: string;
+    bio?: string;
+    avatarCid?: string;
+    headerCid?: string;
+  }) =>
+    request<{ txHash: string }>("/api/profile", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  profileUpdate: (data: { user: string; displayName: string; bio?: string; avatarCid?: string; headerCid?: string }) =>
+    request<{ txHash: string }>("/api/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  profileByHandle: (handle: string) => request<Profile>(`/api/profile/handle/${handle}`),
+  profileByOwner: (owner: string) => request<Profile>(`/api/profile/owner/${owner}`),
+  handleAvailable: (handle: string) => request<{ available: boolean }>(`/api/handle/${handle}/available`),
+  follow: (user: string, target: string) =>
+    request<{ txHash: string }>("/api/follow", {
+      method: "POST",
+      body: JSON.stringify({ user, target }),
+    }),
+  unfollow: (user: string, target: string) =>
+    request<{ txHash: string }>("/api/unfollow", {
+      method: "POST",
+      body: JSON.stringify({ user, target }),
+    }),
+  following: (user: string) => request<string[]>(`/api/following/${user}`),
+  uploadToPinata: (filename: string, contentType: string, dataBase64: string) =>
+    request<{ cid: string; url: string }>("/api/upload", {
+      method: "POST",
+      body: JSON.stringify({ filename, contentType, dataBase64 }),
+    }),
+  anchorChat: (user: string, to: string, cid: string, cidHash: string) =>
+    request<{ txHash: string }>("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ user, to, cid, cidHash }),
     }),
 };
 

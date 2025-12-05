@@ -28,74 +28,181 @@ export declare namespace PolyX {
     id: BigNumberish;
     author: AddressLike;
     content: string;
+    mediaCid: string;
     timestamp: BigNumberish;
     postType: BigNumberish;
     referenceId: BigNumberish;
     likeCount: BigNumberish;
     retweetCount: BigNumberish;
     quoteCount: BigNumberish;
+    commentCount: BigNumberish;
+    version: BigNumberish;
+    deleted: boolean;
   };
 
   export type PostStructOutput = [
     id: bigint,
     author: string,
     content: string,
+    mediaCid: string,
     timestamp: bigint,
     postType: bigint,
     referenceId: bigint,
     likeCount: bigint,
     retweetCount: bigint,
-    quoteCount: bigint
+    quoteCount: bigint,
+    commentCount: bigint,
+    version: bigint,
+    deleted: boolean
   ] & {
     id: bigint;
     author: string;
     content: string;
+    mediaCid: string;
     timestamp: bigint;
     postType: bigint;
     referenceId: bigint;
     likeCount: bigint;
     retweetCount: bigint;
     quoteCount: bigint;
+    commentCount: bigint;
+    version: bigint;
+    deleted: boolean;
+  };
+
+  export type ProfileStruct = {
+    handle: string;
+    displayName: string;
+    bio: string;
+    avatarCid: string;
+    headerCid: string;
+    owner: AddressLike;
+    createdAt: BigNumberish;
+  };
+
+  export type ProfileStructOutput = [
+    handle: string,
+    displayName: string,
+    bio: string,
+    avatarCid: string,
+    headerCid: string,
+    owner: string,
+    createdAt: bigint
+  ] & {
+    handle: string;
+    displayName: string;
+    bio: string;
+    avatarCid: string;
+    headerCid: string;
+    owner: string;
+    createdAt: bigint;
   };
 }
 
 export interface PolyXInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "anchorChatMessage"
       | "batchGetPosts"
       | "createPost"
+      | "createProfile"
+      | "deletePost"
+      | "editPost"
+      | "follow"
+      | "getFollowing"
       | "getPost"
+      | "getProfileByHandle"
+      | "getProfileByOwner"
+      | "handleAvailable"
       | "hasLiked"
+      | "hasQuoted"
       | "hasRetweeted"
+      | "isFollowingAddress"
       | "like"
       | "nextPostId"
-      | "quote"
-      | "retweet"
+      | "unfollow"
+      | "updateProfile"
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "Liked" | "PostCreated" | "Quoted" | "Retweeted"
+    nameOrSignatureOrTopic:
+      | "ChatAnchored"
+      | "Commented"
+      | "Followed"
+      | "Liked"
+      | "PostCreated"
+      | "PostDeleted"
+      | "PostEdited"
+      | "ProfileCreated"
+      | "ProfileUpdated"
+      | "Quoted"
+      | "Retweeted"
+      | "Unfollowed"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "anchorChatMessage",
+    values: [AddressLike, AddressLike, string, string]
+  ): string;
   encodeFunctionData(
     functionFragment: "batchGetPosts",
     values: [BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "createPost",
-    values: [AddressLike, string]
+    values: [AddressLike, string, string, BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createProfile",
+    values: [AddressLike, string, string, string, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "deletePost",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "editPost",
+    values: [AddressLike, BigNumberish, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "follow",
+    values: [AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getFollowing",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getPost",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getProfileByHandle",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getProfileByOwner",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "handleAvailable",
+    values: [string]
+  ): string;
+  encodeFunctionData(
     functionFragment: "hasLiked",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasQuoted",
     values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hasRetweeted",
     values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isFollowingAddress",
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "like",
@@ -106,29 +213,136 @@ export interface PolyXInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "quote",
-    values: [AddressLike, BigNumberish, string]
+    functionFragment: "unfollow",
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "retweet",
-    values: [AddressLike, BigNumberish]
+    functionFragment: "updateProfile",
+    values: [AddressLike, string, string, string, string]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "anchorChatMessage",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "batchGetPosts",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "createPost", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "createProfile",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "deletePost", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "editPost", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "follow", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getFollowing",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getPost", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getProfileByHandle",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getProfileByOwner",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "handleAvailable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "hasLiked", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "hasQuoted", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "hasRetweeted",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "isFollowingAddress",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "like", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "nextPostId", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "quote", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "retweet", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "unfollow", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "updateProfile",
+    data: BytesLike
+  ): Result;
+}
+
+export namespace ChatAnchoredEvent {
+  export type InputTuple = [
+    from: AddressLike,
+    to: AddressLike,
+    cid: string,
+    cidHash: string,
+    timestamp: BigNumberish
+  ];
+  export type OutputTuple = [
+    from: string,
+    to: string,
+    cid: string,
+    cidHash: string,
+    timestamp: bigint
+  ];
+  export interface OutputObject {
+    from: string;
+    to: string;
+    cid: string;
+    cidHash: string;
+    timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace CommentedEvent {
+  export type InputTuple = [
+    postId: BigNumberish,
+    originalId: BigNumberish,
+    user: AddressLike,
+    content: string,
+    mediaCid: string,
+    timestamp: BigNumberish
+  ];
+  export type OutputTuple = [
+    postId: bigint,
+    originalId: bigint,
+    user: string,
+    content: string,
+    mediaCid: string,
+    timestamp: bigint
+  ];
+  export interface OutputObject {
+    postId: bigint;
+    originalId: bigint;
+    user: string;
+    content: string;
+    mediaCid: string;
+    timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace FollowedEvent {
+  export type InputTuple = [follower: AddressLike, target: AddressLike];
+  export type OutputTuple = [follower: string, target: string];
+  export interface OutputObject {
+    follower: string;
+    target: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace LikedEvent {
@@ -156,6 +370,7 @@ export namespace PostCreatedEvent {
     postType: BigNumberish,
     referenceId: BigNumberish,
     content: string,
+    mediaCid: string,
     timestamp: BigNumberish
   ];
   export type OutputTuple = [
@@ -164,6 +379,7 @@ export namespace PostCreatedEvent {
     postType: bigint,
     referenceId: bigint,
     content: string,
+    mediaCid: string,
     timestamp: bigint
   ];
   export interface OutputObject {
@@ -172,7 +388,98 @@ export namespace PostCreatedEvent {
     postType: bigint;
     referenceId: bigint;
     content: string;
+    mediaCid: string;
     timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PostDeletedEvent {
+  export type InputTuple = [
+    id: BigNumberish,
+    author: AddressLike,
+    timestamp: BigNumberish
+  ];
+  export type OutputTuple = [id: bigint, author: string, timestamp: bigint];
+  export interface OutputObject {
+    id: bigint;
+    author: string;
+    timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PostEditedEvent {
+  export type InputTuple = [
+    id: BigNumberish,
+    author: AddressLike,
+    content: string,
+    mediaCid: string,
+    version: BigNumberish
+  ];
+  export type OutputTuple = [
+    id: bigint,
+    author: string,
+    content: string,
+    mediaCid: string,
+    version: bigint
+  ];
+  export interface OutputObject {
+    id: bigint;
+    author: string;
+    content: string;
+    mediaCid: string;
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace ProfileCreatedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    handle: string,
+    displayName: string
+  ];
+  export type OutputTuple = [
+    owner: string,
+    handle: string,
+    displayName: string
+  ];
+  export interface OutputObject {
+    owner: string;
+    handle: string;
+    displayName: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace ProfileUpdatedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    handle: string,
+    displayName: string
+  ];
+  export type OutputTuple = [
+    owner: string,
+    handle: string,
+    displayName: string
+  ];
+  export interface OutputObject {
+    owner: string;
+    handle: string;
+    displayName: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -185,22 +492,25 @@ export namespace QuotedEvent {
     postId: BigNumberish,
     originalId: BigNumberish,
     user: AddressLike,
-    timestamp: BigNumberish,
-    content: string
+    content: string,
+    mediaCid: string,
+    timestamp: BigNumberish
   ];
   export type OutputTuple = [
     postId: bigint,
     originalId: bigint,
     user: string,
-    timestamp: bigint,
-    content: string
+    content: string,
+    mediaCid: string,
+    timestamp: bigint
   ];
   export interface OutputObject {
     postId: bigint;
     originalId: bigint;
     user: string;
-    timestamp: bigint;
     content: string;
+    mediaCid: string;
+    timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -226,6 +536,19 @@ export namespace RetweetedEvent {
     originalId: bigint;
     user: string;
     timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UnfollowedEvent {
+  export type InputTuple = [follower: AddressLike, target: AddressLike];
+  export type OutputTuple = [follower: string, target: string];
+  export interface OutputObject {
+    follower: string;
+    target: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -276,6 +599,12 @@ export interface PolyX extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  anchorChatMessage: TypedContractMethod<
+    [logicalUser: AddressLike, to: AddressLike, cid: string, cidHash: string],
+    [void],
+    "nonpayable"
+  >;
+
   batchGetPosts: TypedContractMethod<
     [ids: BigNumberish[]],
     [PolyX.PostStructOutput[]],
@@ -283,9 +612,57 @@ export interface PolyX extends BaseContract {
   >;
 
   createPost: TypedContractMethod<
-    [logicalUser: AddressLike, content: string],
+    [
+      logicalUser: AddressLike,
+      content: string,
+      mediaCid: string,
+      postType: BigNumberish,
+      referenceId: BigNumberish
+    ],
     [bigint],
     "nonpayable"
+  >;
+
+  createProfile: TypedContractMethod<
+    [
+      logicalUser: AddressLike,
+      handle: string,
+      displayName: string,
+      bio: string,
+      avatarCid: string,
+      headerCid: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  deletePost: TypedContractMethod<
+    [logicalUser: AddressLike, postId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  editPost: TypedContractMethod<
+    [
+      logicalUser: AddressLike,
+      postId: BigNumberish,
+      content: string,
+      mediaCid: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  follow: TypedContractMethod<
+    [follower: AddressLike, target: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  getFollowing: TypedContractMethod<
+    [follower: AddressLike],
+    [string[]],
+    "view"
   >;
 
   getPost: TypedContractMethod<
@@ -294,7 +671,27 @@ export interface PolyX extends BaseContract {
     "view"
   >;
 
+  getProfileByHandle: TypedContractMethod<
+    [handle: string],
+    [PolyX.ProfileStructOutput],
+    "view"
+  >;
+
+  getProfileByOwner: TypedContractMethod<
+    [owner: AddressLike],
+    [PolyX.ProfileStructOutput],
+    "view"
+  >;
+
+  handleAvailable: TypedContractMethod<[handle: string], [boolean], "view">;
+
   hasLiked: TypedContractMethod<
+    [postId: BigNumberish, user: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  hasQuoted: TypedContractMethod<
     [postId: BigNumberish, user: AddressLike],
     [boolean],
     "view"
@@ -302,6 +699,12 @@ export interface PolyX extends BaseContract {
 
   hasRetweeted: TypedContractMethod<
     [postId: BigNumberish, user: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  isFollowingAddress: TypedContractMethod<
+    [follower: AddressLike, target: AddressLike],
     [boolean],
     "view"
   >;
@@ -314,15 +717,21 @@ export interface PolyX extends BaseContract {
 
   nextPostId: TypedContractMethod<[], [bigint], "view">;
 
-  quote: TypedContractMethod<
-    [logicalUser: AddressLike, originalId: BigNumberish, content: string],
-    [bigint],
+  unfollow: TypedContractMethod<
+    [follower: AddressLike, target: AddressLike],
+    [void],
     "nonpayable"
   >;
 
-  retweet: TypedContractMethod<
-    [logicalUser: AddressLike, originalId: BigNumberish],
-    [bigint],
+  updateProfile: TypedContractMethod<
+    [
+      logicalUser: AddressLike,
+      displayName: string,
+      bio: string,
+      avatarCid: string,
+      headerCid: string
+    ],
+    [void],
     "nonpayable"
   >;
 
@@ -330,6 +739,13 @@ export interface PolyX extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "anchorChatMessage"
+  ): TypedContractMethod<
+    [logicalUser: AddressLike, to: AddressLike, cid: string, cidHash: string],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "batchGetPosts"
   ): TypedContractMethod<
@@ -340,10 +756,59 @@ export interface PolyX extends BaseContract {
   getFunction(
     nameOrSignature: "createPost"
   ): TypedContractMethod<
-    [logicalUser: AddressLike, content: string],
+    [
+      logicalUser: AddressLike,
+      content: string,
+      mediaCid: string,
+      postType: BigNumberish,
+      referenceId: BigNumberish
+    ],
     [bigint],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "createProfile"
+  ): TypedContractMethod<
+    [
+      logicalUser: AddressLike,
+      handle: string,
+      displayName: string,
+      bio: string,
+      avatarCid: string,
+      headerCid: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deletePost"
+  ): TypedContractMethod<
+    [logicalUser: AddressLike, postId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "editPost"
+  ): TypedContractMethod<
+    [
+      logicalUser: AddressLike,
+      postId: BigNumberish,
+      content: string,
+      mediaCid: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "follow"
+  ): TypedContractMethod<
+    [follower: AddressLike, target: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getFollowing"
+  ): TypedContractMethod<[follower: AddressLike], [string[]], "view">;
   getFunction(
     nameOrSignature: "getPost"
   ): TypedContractMethod<
@@ -352,7 +817,27 @@ export interface PolyX extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "getProfileByHandle"
+  ): TypedContractMethod<[handle: string], [PolyX.ProfileStructOutput], "view">;
+  getFunction(
+    nameOrSignature: "getProfileByOwner"
+  ): TypedContractMethod<
+    [owner: AddressLike],
+    [PolyX.ProfileStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "handleAvailable"
+  ): TypedContractMethod<[handle: string], [boolean], "view">;
+  getFunction(
     nameOrSignature: "hasLiked"
+  ): TypedContractMethod<
+    [postId: BigNumberish, user: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasQuoted"
   ): TypedContractMethod<
     [postId: BigNumberish, user: AddressLike],
     [boolean],
@@ -362,6 +847,13 @@ export interface PolyX extends BaseContract {
     nameOrSignature: "hasRetweeted"
   ): TypedContractMethod<
     [postId: BigNumberish, user: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "isFollowingAddress"
+  ): TypedContractMethod<
+    [follower: AddressLike, target: AddressLike],
     [boolean],
     "view"
   >;
@@ -376,20 +868,47 @@ export interface PolyX extends BaseContract {
     nameOrSignature: "nextPostId"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "quote"
+    nameOrSignature: "unfollow"
   ): TypedContractMethod<
-    [logicalUser: AddressLike, originalId: BigNumberish, content: string],
-    [bigint],
+    [follower: AddressLike, target: AddressLike],
+    [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "retweet"
+    nameOrSignature: "updateProfile"
   ): TypedContractMethod<
-    [logicalUser: AddressLike, originalId: BigNumberish],
-    [bigint],
+    [
+      logicalUser: AddressLike,
+      displayName: string,
+      bio: string,
+      avatarCid: string,
+      headerCid: string
+    ],
+    [void],
     "nonpayable"
   >;
 
+  getEvent(
+    key: "ChatAnchored"
+  ): TypedContractEvent<
+    ChatAnchoredEvent.InputTuple,
+    ChatAnchoredEvent.OutputTuple,
+    ChatAnchoredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Commented"
+  ): TypedContractEvent<
+    CommentedEvent.InputTuple,
+    CommentedEvent.OutputTuple,
+    CommentedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Followed"
+  ): TypedContractEvent<
+    FollowedEvent.InputTuple,
+    FollowedEvent.OutputTuple,
+    FollowedEvent.OutputObject
+  >;
   getEvent(
     key: "Liked"
   ): TypedContractEvent<
@@ -405,6 +924,34 @@ export interface PolyX extends BaseContract {
     PostCreatedEvent.OutputObject
   >;
   getEvent(
+    key: "PostDeleted"
+  ): TypedContractEvent<
+    PostDeletedEvent.InputTuple,
+    PostDeletedEvent.OutputTuple,
+    PostDeletedEvent.OutputObject
+  >;
+  getEvent(
+    key: "PostEdited"
+  ): TypedContractEvent<
+    PostEditedEvent.InputTuple,
+    PostEditedEvent.OutputTuple,
+    PostEditedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProfileCreated"
+  ): TypedContractEvent<
+    ProfileCreatedEvent.InputTuple,
+    ProfileCreatedEvent.OutputTuple,
+    ProfileCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProfileUpdated"
+  ): TypedContractEvent<
+    ProfileUpdatedEvent.InputTuple,
+    ProfileUpdatedEvent.OutputTuple,
+    ProfileUpdatedEvent.OutputObject
+  >;
+  getEvent(
     key: "Quoted"
   ): TypedContractEvent<
     QuotedEvent.InputTuple,
@@ -418,8 +965,48 @@ export interface PolyX extends BaseContract {
     RetweetedEvent.OutputTuple,
     RetweetedEvent.OutputObject
   >;
+  getEvent(
+    key: "Unfollowed"
+  ): TypedContractEvent<
+    UnfollowedEvent.InputTuple,
+    UnfollowedEvent.OutputTuple,
+    UnfollowedEvent.OutputObject
+  >;
 
   filters: {
+    "ChatAnchored(address,address,string,string,uint256)": TypedContractEvent<
+      ChatAnchoredEvent.InputTuple,
+      ChatAnchoredEvent.OutputTuple,
+      ChatAnchoredEvent.OutputObject
+    >;
+    ChatAnchored: TypedContractEvent<
+      ChatAnchoredEvent.InputTuple,
+      ChatAnchoredEvent.OutputTuple,
+      ChatAnchoredEvent.OutputObject
+    >;
+
+    "Commented(uint256,uint256,address,string,string,uint256)": TypedContractEvent<
+      CommentedEvent.InputTuple,
+      CommentedEvent.OutputTuple,
+      CommentedEvent.OutputObject
+    >;
+    Commented: TypedContractEvent<
+      CommentedEvent.InputTuple,
+      CommentedEvent.OutputTuple,
+      CommentedEvent.OutputObject
+    >;
+
+    "Followed(address,address)": TypedContractEvent<
+      FollowedEvent.InputTuple,
+      FollowedEvent.OutputTuple,
+      FollowedEvent.OutputObject
+    >;
+    Followed: TypedContractEvent<
+      FollowedEvent.InputTuple,
+      FollowedEvent.OutputTuple,
+      FollowedEvent.OutputObject
+    >;
+
     "Liked(uint256,address,uint256)": TypedContractEvent<
       LikedEvent.InputTuple,
       LikedEvent.OutputTuple,
@@ -431,7 +1018,7 @@ export interface PolyX extends BaseContract {
       LikedEvent.OutputObject
     >;
 
-    "PostCreated(uint256,address,uint8,uint256,string,uint256)": TypedContractEvent<
+    "PostCreated(uint256,address,uint8,uint256,string,string,uint256)": TypedContractEvent<
       PostCreatedEvent.InputTuple,
       PostCreatedEvent.OutputTuple,
       PostCreatedEvent.OutputObject
@@ -442,7 +1029,51 @@ export interface PolyX extends BaseContract {
       PostCreatedEvent.OutputObject
     >;
 
-    "Quoted(uint256,uint256,address,uint256,string)": TypedContractEvent<
+    "PostDeleted(uint256,address,uint256)": TypedContractEvent<
+      PostDeletedEvent.InputTuple,
+      PostDeletedEvent.OutputTuple,
+      PostDeletedEvent.OutputObject
+    >;
+    PostDeleted: TypedContractEvent<
+      PostDeletedEvent.InputTuple,
+      PostDeletedEvent.OutputTuple,
+      PostDeletedEvent.OutputObject
+    >;
+
+    "PostEdited(uint256,address,string,string,uint256)": TypedContractEvent<
+      PostEditedEvent.InputTuple,
+      PostEditedEvent.OutputTuple,
+      PostEditedEvent.OutputObject
+    >;
+    PostEdited: TypedContractEvent<
+      PostEditedEvent.InputTuple,
+      PostEditedEvent.OutputTuple,
+      PostEditedEvent.OutputObject
+    >;
+
+    "ProfileCreated(address,string,string)": TypedContractEvent<
+      ProfileCreatedEvent.InputTuple,
+      ProfileCreatedEvent.OutputTuple,
+      ProfileCreatedEvent.OutputObject
+    >;
+    ProfileCreated: TypedContractEvent<
+      ProfileCreatedEvent.InputTuple,
+      ProfileCreatedEvent.OutputTuple,
+      ProfileCreatedEvent.OutputObject
+    >;
+
+    "ProfileUpdated(address,string,string)": TypedContractEvent<
+      ProfileUpdatedEvent.InputTuple,
+      ProfileUpdatedEvent.OutputTuple,
+      ProfileUpdatedEvent.OutputObject
+    >;
+    ProfileUpdated: TypedContractEvent<
+      ProfileUpdatedEvent.InputTuple,
+      ProfileUpdatedEvent.OutputTuple,
+      ProfileUpdatedEvent.OutputObject
+    >;
+
+    "Quoted(uint256,uint256,address,string,string,uint256)": TypedContractEvent<
       QuotedEvent.InputTuple,
       QuotedEvent.OutputTuple,
       QuotedEvent.OutputObject
@@ -462,6 +1093,17 @@ export interface PolyX extends BaseContract {
       RetweetedEvent.InputTuple,
       RetweetedEvent.OutputTuple,
       RetweetedEvent.OutputObject
+    >;
+
+    "Unfollowed(address,address)": TypedContractEvent<
+      UnfollowedEvent.InputTuple,
+      UnfollowedEvent.OutputTuple,
+      UnfollowedEvent.OutputObject
+    >;
+    Unfollowed: TypedContractEvent<
+      UnfollowedEvent.InputTuple,
+      UnfollowedEvent.OutputTuple,
+      UnfollowedEvent.OutputObject
     >;
   };
 }

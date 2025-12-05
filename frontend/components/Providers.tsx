@@ -5,6 +5,7 @@ import { RainbowKitProvider, darkTheme, getDefaultWallets } from "@rainbow-me/ra
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { polygonAmoy } from "wagmi/chains";
 import "@rainbow-me/rainbowkit/styles.css";
+import { ThemeProvider } from "./ThemeProvider";
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
@@ -32,9 +33,11 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider chains={chains} theme={darkTheme({ accentColor: "#6366f1" })}>
-          {children}
-        </RainbowKitProvider>
+        <ThemeProvider>
+          <RainbowKitProvider chains={chains} theme={darkTheme({ accentColor: "#6366f1" })}>
+            {children}
+          </RainbowKitProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

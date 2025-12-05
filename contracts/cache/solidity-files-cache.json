@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\anike\\Desktop\\PolyX\\contracts\\contracts\\PolyX.sol": {
-      "lastModificationDate": 1764927280945,
-      "contentHash": "18569ce93d101f5115fd46fcc50112e0",
+      "lastModificationDate": 1764931833954,
+      "contentHash": "9cb9ac1922c47acabf539e4d06c35377",
       "sourceName": "contracts/PolyX.sol",
       "solcConfig": {
         "version": "0.8.20",
