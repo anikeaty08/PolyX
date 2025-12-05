@@ -88,3 +88,4 @@ export function PostCard({ post }: { post: Post }) {
   );
 }
 
+

@@ -90,3 +90,4 @@ export function extractPostIdFromReceipt(receipt: ethers.ContractTransactionRece
   return undefined;
 }
 
+
