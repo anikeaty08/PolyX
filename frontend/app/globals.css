@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  background: #05060a;
+}
+
+body {
+  @apply bg-[#05060a] text-white font-sans;
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 20% 20%, rgba(99,102,241,0.25), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(236,72,153,0.25), transparent 30%),
+    linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 40%);
+}
+
+.glass {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-glass;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-full font-semibold transition-all;
+}
+
+.btn-primary {
+  @apply btn bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white shadow-lg shadow-indigo-500/30;
+}
+
+.btn-secondary {
+  @apply btn bg-white/10 hover:bg-white/20;
+}
+
