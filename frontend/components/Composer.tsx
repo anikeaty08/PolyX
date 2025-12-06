@@ -88,6 +88,7 @@ export function Composer({ mode = "tweet", referenceId, onDone }: Props) {
         fileInputRef.current.value = "";
       }
       queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["posts", "author"] });
       onDone?.();
     },
   });
@@ -95,17 +96,17 @@ export function Composer({ mode = "tweet", referenceId, onDone }: Props) {
   const isLoading = mutation.isLoading || isUploading;
 
   return (
-    <div className="glass rounded-2xl p-4 space-y-3">
+    <div className="card-3d p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="font-semibold">
-          {mode === "tweet" ? "Compose" : mode === "comment" ? "Add a comment" : "Quote tweet"}
+        <p className="font-bold text-lg gradient-text">
+          {mode === "tweet" ? "What's happening?" : mode === "comment" ? "Add a comment" : "Quote tweet"}
         </p>
-        <span className="text-xs text-white/60">{text.length}/280</span>
+        <span className="text-xs text-gray-400">{text.length}/280</span>
       </div>
       <textarea
-        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-        placeholder={mode === "tweet" ? "What's happening?" : mode === "comment" ? "Add a comment..." : "Add a comment..."}
-        rows={mode === "tweet" ? 3 : 4}
+        className="w-full bg-slate-800/50 border border-indigo-500/30 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-base text-white placeholder-gray-500 transition-all"
+        placeholder={mode === "tweet" ? "Share your thoughts..." : mode === "comment" ? "Write a comment..." : "Add your thoughts..."}
+        rows={mode === "tweet" ? 4 : 3}
         maxLength={280}
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -121,13 +122,13 @@ export function Composer({ mode = "tweet", referenceId, onDone }: Props) {
                 fileInputRef.current.value = "";
               }
             }}
-            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+            className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition-colors"
           >
             ✕
           </button>
         </div>
       )}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-2 border-t border-white/10">
         <div className="flex items-center gap-2">
           <input
             ref={fileInputRef}
@@ -139,13 +140,14 @@ export function Composer({ mode = "tweet", referenceId, onDone }: Props) {
           />
           <label
             htmlFor="media-upload"
-            className="cursor-pointer p-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="cursor-pointer p-2 opacity-70 hover:opacity-100 hover:bg-white/5 rounded-lg transition-all text-xl"
+            title="Add media"
           >
             📷
           </label>
         </div>
         <button
-          className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl font-semibold text-white hover:from-indigo-600 hover:to-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-3d"
           disabled={(!text && !mediaFile) || isLoading}
           onClick={() => mutation.mutate()}
         >

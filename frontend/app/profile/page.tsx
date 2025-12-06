@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAccount } from "wagmi";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { api, Profile } from "../../lib/api";
+import { api, Profile, Post } from "../../lib/api";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { PostCard } from "../../components/PostCard";
+import { FollowButton } from "../../components/FollowButton";
+import { ProfileStats } from "../../components/ProfileStats";
 
 export default function ProfilePage() {
   const { address } = useAccount();
@@ -13,6 +16,7 @@ export default function ProfilePage() {
   const viewUser = searchParams.get("user");
   const isOwnProfile = !viewUser || viewUser.toLowerCase() === address?.toLowerCase();
   const profileAddress = viewUser || address || "";
+  const [activeTab, setActiveTab] = useState<"posts" | "postsAndQuotes" | "postsAndComments">("posts");
 
   const [blocked, setBlocked] = useState<string[]>([]);
   const { data: profile, isLoading } = useQuery({
@@ -27,10 +31,29 @@ export default function ProfilePage() {
     retry: false,
   });
 
+  const { data: userPosts, isLoading: loadingPosts } = useQuery<Post[]>({
+    queryKey: ["posts", "author", profileAddress],
+    queryFn: () => api.postsByAuthor(profileAddress),
+    enabled: Boolean(profileAddress),
+  });
+
+  const { data: currentUserFollowing } = useQuery<string[]>({
+    queryKey: ["following", address],
+    queryFn: () => (address ? api.following(address) : Promise.resolve([])),
+    enabled: Boolean(address),
+    retry: false,
+  });
+
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [avatarCid, setAvatarCid] = useState("");
   const [headerCid, setHeaderCid] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [headerPreview, setHeaderPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingHeader, setIsUploadingHeader] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const headerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("polyx-blocked") || "[]") as string[];
@@ -43,8 +66,98 @@ export default function ProfilePage() {
       setBio(profile.bio);
       setAvatarCid(profile.avatarCid);
       setHeaderCid(profile.headerCid);
+      if (profile.avatarCid) {
+        setAvatarPreview(`${process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud"}/ipfs/${profile.avatarCid}`);
+      }
+      if (profile.headerCid) {
+        setHeaderPreview(`${process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud"}/ipfs/${profile.headerCid}`);
+      }
     }
   }, [profile]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Avatar image must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      const result = await api.uploadToPinata(file.name, file.type, base64);
+      setAvatarCid(result.cid);
+      setAvatarPreview(result.url);
+      // Auto-save if on own profile
+      if (isOwnProfile && address && profile) {
+        try {
+          await api.profileUpdate({ 
+            user: address, 
+            displayName: profile.displayName, 
+            bio: profile.bio, 
+            avatarCid: result.cid, 
+            headerCid: profile.headerCid 
+          });
+          alert("Avatar updated successfully!");
+          window.location.reload();
+        } catch (updateError: any) {
+          alert("Avatar uploaded but failed to save. Please try again.");
+        }
+      }
+    } catch (error: any) {
+      alert(error.message || "Failed to upload avatar");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleHeaderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Header image must be less than 10MB");
+      return;
+    }
+
+    setIsUploadingHeader(true);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      const result = await api.uploadToPinata(file.name, file.type, base64);
+      setHeaderCid(result.cid);
+      setHeaderPreview(result.url);
+      // Auto-save if on own profile
+      if (isOwnProfile && address) {
+        await api.profileUpdate({ user: address, displayName, bio, avatarCid, headerCid: result.cid });
+        alert("Header updated successfully!");
+        window.location.reload();
+      }
+    } catch (error: any) {
+      alert(error.message || "Failed to upload header");
+    } finally {
+      setIsUploadingHeader(false);
+    }
+  };
 
   const update = useMutation({
     mutationFn: async () => {
@@ -72,6 +185,18 @@ export default function ProfilePage() {
 
   const isBlocked = profileAddress && blocked.map((b) => b.toLowerCase()).includes(profileAddress.toLowerCase());
 
+  // Filter posts based on active tab
+  const filteredPosts = userPosts?.filter((post) => {
+    if (activeTab === "posts") {
+      return post.postType === 0; // Only original posts
+    } else if (activeTab === "postsAndQuotes") {
+      return post.postType === 0 || post.postType === 2; // Posts and quotes
+    } else if (activeTab === "postsAndComments") {
+      return post.postType === 0 || post.postType === 3; // Posts and comments
+    }
+    return true;
+  }) || [];
+
   if (isLoading) {
     return (
       <main className="max-w-4xl mx-auto px-4 py-10">
@@ -98,38 +223,79 @@ export default function ProfilePage() {
     );
   }
 
-  const avatarUrl = profile?.avatarCid
+  const avatarUrl = avatarPreview || (profile?.avatarCid
     ? `${process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud"}/ipfs/${profile.avatarCid}`
-    : null;
-  const headerUrl = profile?.headerCid
+    : null);
+  const headerUrl = headerPreview || (profile?.headerCid
     ? `${process.env.NEXT_PUBLIC_PINATA_GATEWAY || "https://gateway.pinata.cloud"}/ipfs/${profile.headerCid}`
-    : null;
+    : null);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10 space-y-6">
       {/* Profile Header */}
-      <div className="glass rounded-3xl overflow-hidden">
-        {headerUrl ? (
-          <img src={headerUrl} alt="Header" className="w-full h-48 object-cover" />
-        ) : (
-          <div className="w-full h-48 bg-gradient-to-r from-indigo-500/20 to-purple-500/20" />
-        )}
+      <div className="card overflow-hidden">
+        <div className="relative">
+          {headerUrl ? (
+            <img src={headerUrl} alt="Header" className="w-full h-48 object-cover" />
+          ) : (
+            <div className="w-full h-48 bg-gradient-to-r from-indigo-500/20 to-purple-500/20" />
+          )}
+          {isOwnProfile && (
+            <div className="absolute top-2 right-2">
+              <input
+                ref={headerInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleHeaderUpload}
+                className="hidden"
+                id="header-upload"
+              />
+              <label
+                htmlFor="header-upload"
+                className="cursor-pointer bg-black/50 hover:bg-black/70 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+              >
+                {isUploadingHeader ? "Uploading..." : "📷 Change Header"}
+              </label>
+            </div>
+          )}
+        </div>
         <div className="p-6 -mt-16 relative">
           <div className="flex items-end gap-4 mb-4">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={profile.displayName}
-                className="w-24 h-24 rounded-full border-4 border-black object-cover"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full border-4 border-black bg-indigo-500/20 flex items-center justify-center text-3xl font-bold">
-                {profile?.displayName.charAt(0).toUpperCase() || "?"}
-              </div>
-            )}
+            <div className="relative">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={profile?.displayName}
+                  className="w-24 h-24 rounded-full border-4 border-black object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full border-4 border-black bg-indigo-500/20 flex items-center justify-center text-3xl font-bold">
+                  {profile?.displayName.charAt(0).toUpperCase() || "?"}
+                </div>
+              )}
+              {isOwnProfile && (
+                <div className="absolute bottom-0 right-0">
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                    id="avatar-upload"
+                  />
+                  <label
+                    htmlFor="avatar-upload"
+                    className="cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white rounded-full p-2 transition-colors"
+                  >
+                    {isUploadingAvatar ? "..." : "📷"}
+                  </label>
+                </div>
+              )}
+            </div>
             {!isOwnProfile && address && (
               <div className="flex gap-2 ml-auto">
-                <Link href={`/messages?chat=${profileAddress}`} className="btn-secondary text-sm">
+                <FollowButton currentUser={address} targetUser={profileAddress} />
+                <Link href={`/messaging?chat=${profileAddress}`} className="btn-secondary text-sm">
                   Message
                 </Link>
                 {isBlocked ? (
@@ -148,61 +314,85 @@ export default function ProfilePage() {
           <p className="text-white/70">@{profile?.handle}</p>
           {profile?.bio && <p className="mt-2 text-white/80">{profile.bio}</p>}
           <p className="mt-2 text-xs text-white/50 font-mono">{profile?.owner}</p>
+          <div className="mt-4">
+            <ProfileStats 
+              userAddress={profileAddress} 
+              currentUser={address || undefined}
+              followingList={address ? (currentUserFollowing?.map(f => f.toLowerCase()) || []) : undefined}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Edit Profile (Own Profile Only) */}
+      {/* Edit Profile Link (Own Profile Only) */}
       {isOwnProfile && profile && (
-        <div className="glass p-6 rounded-3xl space-y-4">
-          <h2 className="text-xl font-semibold">Edit Profile</h2>
-          <div className="grid md:grid-cols-2 gap-3">
-            <label className="text-sm space-y-1">
-              <span>Display name</span>
-              <input
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-            </label>
-            <label className="text-sm space-y-1">
-              <span>Bio</span>
-              <input
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-              />
-            </label>
+        <div className="card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">Profile Settings</h2>
+            <Link href="/settings" className="btn-primary">
+              Edit Profile
+            </Link>
           </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <label className="text-sm space-y-1">
-              <span>Avatar CID</span>
-              <input
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3"
-                value={avatarCid}
-                onChange={(e) => setAvatarCid(e.target.value)}
-                placeholder="ipfs:// or CID"
-              />
-            </label>
-            <label className="text-sm space-y-1">
-              <span>Header CID</span>
-              <input
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3"
-                value={headerCid}
-                onChange={(e) => setHeaderCid(e.target.value)}
-                placeholder="ipfs:// or CID"
-              />
-            </label>
+        </div>
+      )}
+
+      {/* Posts Tabs */}
+      {profileAddress && (
+        <div className="card p-6 space-y-4">
+          <div className="flex gap-2 border-b border-white/10 pb-2">
+            <button
+              onClick={() => setActiveTab("posts")}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                activeTab === "posts"
+                  ? "bg-indigo-500 text-white"
+                  : "text-white/70 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              Tweets
+            </button>
+            <button
+              onClick={() => setActiveTab("postsAndQuotes")}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                activeTab === "postsAndQuotes"
+                  ? "bg-indigo-500 text-white"
+                  : "text-white/70 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              Tweets & Quotes
+            </button>
+            <button
+              onClick={() => setActiveTab("postsAndComments")}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                activeTab === "postsAndComments"
+                  ? "bg-indigo-500 text-white"
+                  : "text-white/70 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              Tweets & Comments
+            </button>
           </div>
-          <button className="btn-primary" disabled={update.isLoading} onClick={() => update.mutate()}>
-            {update.isLoading ? "Saving..." : "Save profile"}
-          </button>
-          {update.error ? <p className="text-red-400 text-sm">{(update.error as Error).message}</p> : null}
+
+          {loadingPosts ? (
+            <div className="text-center py-8 text-white/70">Loading posts...</div>
+          ) : filteredPosts.length > 0 ? (
+            <div className="space-y-4">
+              {filteredPosts
+                .filter((post) => post.postType !== 3) // Don't show comments in main list
+                .map((post) => (
+                  <PostCard key={post.id} post={post} showComments={true} />
+                ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-white/70">
+              <p>No posts found for this filter.</p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Blocked Users (Own Profile Only) */}
       {isOwnProfile && (
-        <div className="glass p-6 rounded-3xl space-y-3">
+        <div className="card p-6 space-y-3">
           <h2 className="text-xl font-semibold">Blocked users</h2>
           {blocked.length === 0 ? (
             <p className="text-white/70 text-sm">No one blocked.</p>

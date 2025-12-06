@@ -19,12 +19,27 @@ export default function SearchPage() {
     setMounted(true);
   }, []);
 
-  const { data: results, isLoading, refetch } = useQuery<Profile[]>({
-    queryKey: ["search", query],
-    queryFn: () => api.search(query),
-    enabled: Boolean(query && query.length >= 2 && mounted),
+  // Try to search by handle first, then by address
+  const { data: profileByHandle, isLoading: isLoadingHandle } = useQuery<Profile>({
+    queryKey: ["profile", "handle", query],
+    queryFn: () => api.profileByHandle(query),
+    enabled: Boolean(query && query.length >= 2 && mounted && !query.startsWith("0x")),
     retry: false,
   });
+
+  const { data: profileByAddress, isLoading: isLoadingAddress } = useQuery<Profile>({
+    queryKey: ["profile", "owner", query],
+    queryFn: () => api.profileByOwner(query),
+    enabled: Boolean(query && query.length === 42 && query.startsWith("0x") && mounted),
+    retry: false,
+  });
+
+  const isLoading = isLoadingHandle || isLoadingAddress;
+  const results: Profile[] = [];
+  if (profileByHandle) results.push(profileByHandle);
+  if (profileByAddress && profileByAddress.owner.toLowerCase() !== profileByHandle?.owner.toLowerCase()) {
+    results.push(profileByAddress);
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +61,7 @@ export default function SearchPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10 space-y-6">
-      <div className="glass rounded-3xl p-6 space-y-6">
+      <div className="card p-8 space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Search Users</h1>
           <p className="text-white/70 text-sm">Search by username (handle) or wallet address</p>
@@ -57,7 +72,7 @@ export default function SearchPage() {
             <input
               type="text"
               className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter username or wallet address (0x...)"
+              placeholder="Enter username (e.g., alice) or wallet address (0x...)"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
@@ -83,7 +98,7 @@ export default function SearchPage() {
             ) : (
               <div className="text-center py-8 text-white/70">
                 <p>No users found for &quot;{query}&quot;</p>
-                <p className="text-sm mt-2">Try searching by handle or wallet address</p>
+                <p className="text-sm mt-2">Try searching by handle (username) or wallet address</p>
               </div>
             )}
           </div>
@@ -143,7 +158,7 @@ function UserResultCard({ profile, currentUser }: { profile: Profile; currentUse
     : null;
 
   return (
-    <div className="glass border border-white/5 rounded-2xl p-4 hover:border-indigo-500/50 transition-colors">
+    <div className="card p-5 hover:border-indigo-500/50 transition-all">
       <div className="flex items-start gap-4">
         {avatarUrl ? (
           <img src={avatarUrl} alt={profile.displayName} className="w-16 h-16 rounded-full object-cover" />
@@ -197,6 +212,3 @@ function UserResultCard({ profile, currentUser }: { profile: Profile; currentUse
     </div>
   );
 }
-
-
-

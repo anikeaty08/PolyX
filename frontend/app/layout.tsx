@@ -1,7 +1,8 @@
 import "./globals.css";
 import { ReactNode } from "react";
 import { Providers } from "../components/Providers";
-import { Navigation } from "../components/Navigation";
+import { Sidebar } from "../components/Sidebar";
+import { Footer } from "../components/Footer";
 
 export const metadata = {
   title: "PolyX – Gasless Social on Polygon",
@@ -10,13 +11,16 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" data-theme="dark">
+      <body className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
         <Providers>
-          <Navigation />
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
-            {children}
-          </div>
+          <Sidebar />
+          <main className="md:ml-72 min-h-screen">
+            <div className="p-4 md:p-8">
+              {children}
+            </div>
+          </main>
+          <Footer />
         </Providers>
       </body>
     </html>

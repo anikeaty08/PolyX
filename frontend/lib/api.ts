@@ -43,6 +43,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   feed: () => request<Post[]>("/api/feed"),
   post: (id: number) => request<Post>(`/api/post/${id}`),
+  postsByAuthor: (author: string) => request<Post[]>(`/api/posts/by-author/${author}`),
   tweet: (user: string, text: string, mediaCid = "") =>
     request<{ txHash: string; postId?: number }>("/api/tweet", {
       method: "POST",
@@ -109,27 +110,54 @@ export const api = {
       body: JSON.stringify({ user, target }),
     }),
   following: (user: string) => request<string[]>(`/api/following/${user}`),
+  followers: (user: string) => request<string[]>(`/api/followers/${user}`),
+  notifications: (user: string) => request<Array<{ type: "like" | "quote" | "comment" | "follow"; from: string; postId?: number; timestamp: number }>>(`/api/notifications/${user}`),
+  hasLiked: (postId: number, user: string) => request<{ liked: boolean }>(`/api/post/${postId}/liked/${user}`),
+  hasRetweeted: (postId: number, user: string) => request<{ retweeted: boolean }>(`/api/post/${postId}/retweeted/${user}`),
   uploadToPinata: (filename: string, contentType: string, dataBase64: string) =>
     request<{ cid: string; url: string }>("/api/upload", {
       method: "POST",
       body: JSON.stringify({ filename, contentType, dataBase64 }),
     }),
-  anchorChat: (user: string, to: string, cid: string, cidHash: string) =>
-    request<{ txHash: string }>("/api/chat", {
+  sendMessage: (from: string, to: string, content: string) =>
+    request<ChatMessage>("/api/message/send", {
       method: "POST",
-      body: JSON.stringify({ user, to, cid, cidHash }),
+      body: JSON.stringify({ from, to, content }),
+    }),
+  deleteMessage: (messageId: string, user: string) =>
+    request<{ deleted: boolean }>(`/api/message/${messageId}?user=${encodeURIComponent(user)}`, {
+      method: "DELETE",
     }),
   conversations: (user: string) => request<Conversation[]>(`/api/conversations/${user}`),
   messages: (user: string, other: string) => request<ChatMessage[]>(`/api/messages/${user}/${other}`),
+  clearChat: (user: string, other: string) =>
+    request<{ cleared: boolean }>("/api/chat/clear", {
+      method: "POST",
+      body: JSON.stringify({ user, target: other }),
+    }),
+  blockUser: (user: string, target: string) =>
+    request<{ blocked: boolean }>("/api/block", {
+      method: "POST",
+      body: JSON.stringify({ user, target }),
+    }),
+  unblockUser: (user: string, target: string) =>
+    request<{ unblocked: boolean }>("/api/unblock", {
+      method: "POST",
+      body: JSON.stringify({ user, target }),
+    }),
+  isBlocked: (user: string, other: string) => request<{ blocked: boolean }>(`/api/blocked/${user}/${other}`),
+  getBlockedUsers: (user: string) => request<string[]>(`/api/blocked/${user}`),
   search: (query: string) => request<Profile[]>(`/api/search?q=${encodeURIComponent(query)}`),
 };
 
 export interface ChatMessage {
+  id?: string;
   from: string;
   to: string;
-  cid: string;
-  cidHash: string;
+  content: string;
   timestamp: number;
+  deleted?: boolean;
+  read?: number | null; // timestamp when read, null if not read
 }
 
 export interface Conversation {

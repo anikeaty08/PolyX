@@ -9,7 +9,7 @@ export default function About() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-3xl p-6 md:p-10 space-y-4"
+        className="card p-8 md:p-12 space-y-4"
       >
         <Link href="/" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-2 mb-4">
           ← Back to Home
@@ -24,23 +24,23 @@ export default function About() {
       </motion.div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <p className="font-semibold">Why Polygon Amoy</p>
-          <p className="text-white/70 text-sm">Low fees, high throughput, and EVM tooling for rapid social UX.</p>
+        <div className="card p-5 space-y-2">
+          <p className="font-bold text-lg">Why Polygon Amoy</p>
+          <p className="opacity-70 text-sm">Low fees, high throughput, and EVM tooling for rapid social UX.</p>
         </div>
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <p className="font-semibold">Media on IPFS/Pinata</p>
-          <p className="text-white/70 text-sm">Images/videos are stored as CIDs; hashes are referenced on-chain.</p>
+        <div className="card p-5 space-y-2">
+          <p className="font-bold text-lg">Media on IPFS/Pinata</p>
+          <p className="opacity-70 text-sm">Images/videos are stored as CIDs; hashes are referenced on-chain.</p>
         </div>
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <p className="font-semibold">Roadmap</p>
-          <p className="text-white/70 text-sm">
+        <div className="card p-5 space-y-2">
+          <p className="font-bold text-lg">Roadmap</p>
+          <p className="opacity-70 text-sm">
             Profile pages, Following/Suggested feeds, edit/delete, comments, chat anchoring, AI chat entrypoint.
           </p>
         </div>
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <p className="font-semibold">Transparency</p>
-          <p className="text-white/70 text-sm">All critical actions are on-chain; relayer sponsors gas for UX.</p>
+        <div className="card p-5 space-y-2">
+          <p className="font-bold text-lg">Transparency</p>
+          <p className="opacity-70 text-sm">All critical actions are on-chain; relayer sponsors gas for UX.</p>
         </div>
       </div>
 
