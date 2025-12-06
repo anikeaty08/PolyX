@@ -119,6 +119,23 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ user, to, cid, cidHash }),
     }),
+  conversations: (user: string) => request<Conversation[]>(`/api/conversations/${user}`),
+  messages: (user: string, other: string) => request<ChatMessage[]>(`/api/messages/${user}/${other}`),
+  search: (query: string) => request<Profile[]>(`/api/search?q=${encodeURIComponent(query)}`),
 };
+
+export interface ChatMessage {
+  from: string;
+  to: string;
+  cid: string;
+  cidHash: string;
+  timestamp: number;
+}
+
+export interface Conversation {
+  address: string;
+  lastMessage?: ChatMessage;
+  unreadCount: number;
+}
 
 

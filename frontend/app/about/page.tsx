@@ -1,19 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function About() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 space-y-8">
-      <div className="glass rounded-3xl p-6 md:p-10 space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass rounded-3xl p-6 md:p-10 space-y-4"
+      >
+        <Link href="/" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-2 mb-4">
+          ← Back to Home
+        </Link>
         <p className="text-sm uppercase tracking-[0.25em] text-indigo-300/80">About PolyX</p>
         <h1 className="text-4xl font-bold">Gasless, on-chain social on Polygon Amoy</h1>
-        <p className="text-white/70">
+        <p className="text-white/70 text-lg">
           PolyX makes every action verifiable on-chain while keeping the UX smooth with a sponsored relayer. Profiles,
           posts, likes, retweets, quotes, comments, edits, deletes, follows, and media CIDs live on-chain (media bytes
-          on IPFS/Pinata). We’re building a transparent social graph with wallet-first identity.
+          on IPFS/Pinata). We're building a transparent social graph with wallet-first identity.
         </p>
-      </div>
+      </motion.div>
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="glass rounded-2xl p-4 space-y-2">
@@ -37,9 +45,6 @@ export default function About() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link href="/" className="btn-primary px-4 py-2 rounded-xl">
-          Back to app
-        </Link>
         <Link
           href="https://docs.pinata.cloud/"
           target="_blank"
@@ -52,5 +57,7 @@ export default function About() {
     </main>
   );
 }
+
+
 
 

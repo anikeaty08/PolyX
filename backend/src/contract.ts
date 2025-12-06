@@ -20,7 +20,8 @@ const polyxAbi = [
   "function getFollowing(address follower) view returns (address[])",
   "function isFollowingAddress(address follower,address target) view returns (bool)",
   "function anchorChatMessage(address logicalUser,address to,string cid,string cidHash)",
-  "event PostCreated(uint256 indexed id,address indexed author,uint8 indexed postType,uint256 referenceId,string content,string mediaCid,uint256 timestamp)"
+  "event PostCreated(uint256 indexed id,address indexed author,uint8 indexed postType,uint256 referenceId,string content,string mediaCid,uint256 timestamp)",
+  "event ChatAnchored(address indexed from,address indexed to,string cid,string cidHash,uint256 timestamp)"
 ];
 
 export const envSchema = z.object({
@@ -101,14 +102,30 @@ export async function updateProfile(
   return tx.wait();
 }
 
-export async function getProfileByOwner(owner: string): Promise<Profile> {
-  const raw = await contract.getProfileByOwner(owner);
-  return mapProfile(raw);
+export async function getProfileByOwner(owner: string): Promise<Profile | null> {
+  try {
+    const raw = await contract.getProfileByOwner(owner);
+    return mapProfile(raw);
+  } catch (err: any) {
+    // Check if it's a ProfileNotFound revert
+    if (err?.reason?.includes("ProfileNotFound") || err?.message?.includes("ProfileNotFound") || err?.code === "CALL_EXCEPTION") {
+      return null;
+    }
+    throw err;
+  }
 }
 
-export async function getProfileByHandle(handle: string): Promise<Profile> {
-  const raw = await contract.getProfileByHandle(handle);
-  return mapProfile(raw);
+export async function getProfileByHandle(handle: string): Promise<Profile | null> {
+  try {
+    const raw = await contract.getProfileByHandle(handle);
+    return mapProfile(raw);
+  } catch (err: any) {
+    // Check if it's a ProfileNotFound revert
+    if (err?.reason?.includes("ProfileNotFound") || err?.message?.includes("ProfileNotFound") || err?.code === "CALL_EXCEPTION") {
+      return null;
+    }
+    throw err;
+  }
 }
 
 export async function handleAvailable(handle: string): Promise<boolean> {
@@ -177,6 +194,28 @@ export function extractPostIdFromReceipt(receipt: ethers.ContractTransactionRece
     }
   }
   return undefined;
+}
+
+export async function getChatMessages(userAddress: string, fromBlock = 0): Promise<Array<{ from: string; to: string; cid: string; cidHash: string; timestamp: number }>> {
+  const filter = contract.filters.ChatAnchored(null, null);
+  const events = await contract.queryFilter(filter, fromBlock);
+  const messages: Array<{ from: string; to: string; cid: string; cidHash: string; timestamp: number }> = [];
+  for (const event of events) {
+    if (event && "args" in event && event.args) {
+      const from = event.args[0] as string;
+      const to = event.args[1] as string;
+      if (from.toLowerCase() === userAddress.toLowerCase() || to.toLowerCase() === userAddress.toLowerCase()) {
+        messages.push({
+          from,
+          to,
+          cid: event.args[2] as string,
+          cidHash: event.args[3] as string,
+          timestamp: Number(event.args[4]) * 1000,
+        });
+      }
+    }
+  }
+  return messages.sort((a, b) => b.timestamp - a.timestamp);
 }
 
 

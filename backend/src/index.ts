@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { z } from "zod";
-// Using global Blob from Node's Web API implementation
+import { Blob } from "buffer";
 import {
   anchorChatMessage,
   createPost,
@@ -24,8 +24,7 @@ import {
   unfollow,
   updateProfile,
 } from "./contract";
-import { ApiResponse, Post, Profile } from "./types";
-import { PostType } from "./types";
+import { ApiResponse, Post, Profile, PostTypeEnum } from "./types";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 const MAX_LEN = 280;
@@ -151,6 +150,9 @@ app.get("/api/profile/handle/:handle", async (req, res) => {
   const handle = req.params.handle;
   try {
     const profile = await getProfileByHandle(handle);
+    if (!profile) {
+      return res.status(404).json({ success: false, error: "Profile not found" });
+    }
     return respond<Profile>(res, { success: true, data: profile });
   } catch (err: any) {
     return respond(res, { success: false, error: err.message || "Failed to fetch profile" });
@@ -161,6 +163,9 @@ app.get("/api/profile/owner/:owner", async (req, res) => {
   const owner = req.params.owner;
   try {
     const profile = await getProfileByOwner(owner);
+    if (!profile) {
+      return res.status(404).json({ success: false, error: "Profile not found" });
+    }
     return respond<Profile>(res, { success: true, data: profile });
   } catch (err: any) {
     return respond(res, { success: false, error: err.message || "Failed to fetch profile" });
@@ -211,7 +216,7 @@ app.post("/api/tweet", async (req, res) => {
   const parsed = tweetSchema.safeParse(req.body);
   if (!parsed.success) return respond(res, { success: false, error: parsed.error.message });
   try {
-    const receipt = await createPost(parsed.data.user, parsed.data.text, parsed.data.mediaCid, 0, 0);
+    const receipt = await createPost(parsed.data.user, parsed.data.text, parsed.data.mediaCid, PostTypeEnum.Original, 0);
     const postId = extractPostIdFromReceipt(receipt);
     return respond(res, { success: true, data: { txHash: receipt?.hash, postId } });
   } catch (err: any) {
@@ -227,7 +232,7 @@ app.post("/api/comment", async (req, res) => {
       parsed.data.user,
       parsed.data.text,
       parsed.data.mediaCid,
-      3,
+      PostTypeEnum.Comment,
       parsed.data.postId
     );
     const postId = extractPostIdFromReceipt(receipt);
@@ -241,7 +246,7 @@ app.post("/api/retweet", async (req, res) => {
   const parsed = likeSchema.safeParse(req.body); // same shape: postId, user
   if (!parsed.success) return respond(res, { success: false, error: parsed.error.message });
   try {
-    const receipt = await createPost(parsed.data.user, "", "", 1, parsed.data.postId);
+    const receipt = await createPost(parsed.data.user, "", "", PostTypeEnum.Retweet, parsed.data.postId);
     const postId = extractPostIdFromReceipt(receipt);
     return respond(res, { success: true, data: { txHash: receipt?.hash, postId } });
   } catch (err: any) {
@@ -257,7 +262,7 @@ app.post("/api/quote", async (req, res) => {
       parsed.data.user,
       parsed.data.text,
       parsed.data.mediaCid,
-      2,
+      PostTypeEnum.Quote,
       parsed.data.postId
     );
     const postId = extractPostIdFromReceipt(receipt);

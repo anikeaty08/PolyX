@@ -11,6 +11,11 @@ interface Props {
 
 export function OnboardingGate({ children }: Props) {
   const { address, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [handle, setHandle] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -49,7 +54,7 @@ export function OnboardingGate({ children }: Props) {
     },
   });
 
-  const missingProfile = isConnected && !loadingProfile && !profile;
+  const missingProfile = mounted && isConnected && !loadingProfile && !profile;
   const disableSubmit = !handle || !displayName || createProfile.isLoading || checking || available === false;
 
   const statusLabel = useMemo(() => {
@@ -59,6 +64,10 @@ export function OnboardingGate({ children }: Props) {
     if (available === true) return "Handle available";
     return "";
   }, [handle, checking, available]);
+
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return (
     <>
