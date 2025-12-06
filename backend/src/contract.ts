@@ -51,8 +51,15 @@ export async function readBatch(ids: number[]): Promise<Post[]> {
   return raw.map(mapPost);
 }
 
-export async function createPost(logicalUser: string, content: string, mediaCid: string, postType: PostType, referenceId: number) {
-  const tx = await contract.createPost(logicalUser, content, mediaCid, postType, referenceId);
+export async function createPost(
+  logicalUser: string,
+  content: string,
+  mediaCid: string,
+  postType: PostType,
+  referenceId: number,
+  overrides?: { maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint }
+) {
+  const tx = await contract.createPost(logicalUser, content, mediaCid, postType, referenceId, overrides ?? {});
   return tx.wait();
 }
 
